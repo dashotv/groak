@@ -27,8 +27,7 @@ var serverCmd = &cobra.Command{
 		// Parse environment variables into Config struct
 		cfg := &Config{}
 		if err := env.Parse(cfg); err != nil {
-			fmt.Printf("failed to parse config: %s\n", err)
-			os.Exit(1)
+			log.Fatalf("failed to parse config: %s\n", err)
 		}
 
 		// setup signals
@@ -40,22 +39,27 @@ var serverCmd = &cobra.Command{
 			log.Fatalf("failed to open db: %s\n", err)
 		}
 		defer db.Close()
-
-		p, err := scraper.New(db)
-		if err != nil {
-			log.Fatalf("failed to create processor: %s\n", err)
-		}
-
 		init, err := cmd.Flags().GetBool("init")
 		if err != nil {
 			log.Fatalf("failed to get init flag: %s\n", err)
 		}
 
 		if init {
-			p.Initialize()
-		} else {
-			p.Process()
+			if err := db.Setup(); err != nil {
+				log.Fatalf("failed to setup db: %s\n", err)
+			}
+			// if err := p.Initialize(); err != nil {
+			// 	log.Fatalf("failed to initialize processing: %s\n", err)
+			// }
+			return
 		}
+
+		p, err := scraper.New(db)
+		if err != nil {
+			log.Fatalf("failed to create processor: %s\n", err)
+		}
+
+		p.Process()
 
 		if init {
 			log.Printf("intialized")

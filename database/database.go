@@ -24,6 +24,10 @@ func Open(path string) (*Database, error) {
 	return d, nil
 }
 
+func (d *Database) Setup() error {
+	return d.SaveSettings(&Settings{})
+}
+
 func (d *Database) Close() {
 	d.client.Close()
 }
@@ -49,21 +53,4 @@ func (d *Database) Set(bucket, key, value string) error {
 		}
 		return b.Put([]byte(key), []byte(value))
 	})
-}
-
-func (d *Database) Initialized() (bool, error) {
-	val, err := d.Get("groak", "initialized")
-	if err != nil {
-		return false, err
-	}
-	if val == "" {
-		if err := d.Set("groak", "initialized", "false"); err != nil {
-			return false, err
-		}
-	}
-	return val == "true", nil
-}
-
-func (d *Database) SetInitialized() error {
-	return d.Set("groak", "initialized", "true")
 }
