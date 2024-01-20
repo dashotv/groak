@@ -19,7 +19,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 FROM alpine
 # Copy our static executable.
 WORKDIR /root/
-RUN apk add --no-cache ffmpeg yt-dlp
-COPY --from=builder /go/bin/tower .
+# RUN apk add --no-cache ffmpeg yt-dlp
+COPY --from=builder /go/bin/groak .
 COPY .env.vault .
 CMD ["./groak"]
