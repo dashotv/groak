@@ -17,34 +17,35 @@ type Processor struct {
 
 func (p *Processor) Process() {
 	for name, url := range p.cfg.URLs {
-		log.Printf("processing: %s = %s\n", name, url)
+		// log.Printf("processing: %s = %s\n", name, url)
 		m := myanime.New("https://" + url)
 		for _, v := range m.Read() {
-			val, err := p.db.Get(name, url)
+			val, err := p.db.Get(name, v)
 			if err != nil {
-				log.Printf("error: db get: %s: %s\n", url, err)
+				log.Printf("error: db get: %s: %s\n", v, err)
 				continue
 			}
 			if val != "" {
-				log.Printf("skipping: %s: %s\n", url, val)
+				// log.Printf("skipping: %s: %s\n", v, val)
 				continue
 			}
 
 			if !p.cfg.Initialize {
 				// skip downloads on first run
+				log.Printf("download: %s: %s\n", name, v)
 				if err := p.Download(name, v); err != nil {
 					log.Printf("error: %s", err)
 					continue
 				}
 			}
 
-			if err := p.db.Set(name, url, time.Now().String()); err != nil {
-				log.Printf("error: db set: %s: %s", url, err)
+			if err := p.db.Set(name, v, time.Now().String()); err != nil {
+				log.Printf("error: db set: %s: %s", v, err)
 				continue
 			}
 		}
 
-		log.Printf("finished: %s = %s\n", name, url)
+		// log.Printf("finished: %s = %s\n", name, url)
 		<-time.After(5 * time.Second)
 	}
 }
