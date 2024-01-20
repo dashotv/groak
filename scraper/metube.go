@@ -19,7 +19,7 @@ func NewMetube(url string) *Metube {
 func (m *Metube) Download(name, url string) error {
 	client := resty.New()
 	resp, err := client.R().
-		SetBody(&Download{url, false, "best", "any", name}).
+		SetBody(&MetubeDownload{url, false, "best", "any", name}).
 		Post(m.URL)
 	if err != nil {
 		return err
@@ -31,7 +31,7 @@ func (m *Metube) Download(name, url string) error {
 	return nil
 }
 
-type Download struct {
+type MetubeDownload struct {
 	URL       string `json:"url"`
 	AutoStart bool   `json:"auto_start"`
 	Quality   string `json:"quality"`
@@ -39,6 +39,6 @@ type Download struct {
 	Name      string `json:"custom_name_prefix"`
 }
 
-type Response struct {
+type MetubeResponse struct {
 	Status string `json:"status"`
 }
