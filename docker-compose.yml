@@ -1,0 +1,9 @@
+version: "3.8"
+services:
+  groak:
+    image: cosmtrek/air
+    working_dir: /app
+    command: server
+    container_name: groak
+    volumes:
+      - ./:/app
