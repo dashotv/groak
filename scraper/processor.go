@@ -11,6 +11,7 @@ import (
 type Processor struct {
 	DB          *database.Database
 	Settings    *database.Settings
+	init        bool
 	scrapers    map[string]Scraper
 	downloaders map[string]Downloader
 }
@@ -52,6 +53,11 @@ func New(db *database.Database) (*Processor, error) {
 	return p, nil
 }
 
+func (p *Processor) Initialize() error {
+	p.init = true
+	return p.Process()
+}
+
 func (p *Processor) Process() error {
 	for _, page := range p.Settings.Pages {
 		m, ok := p.scrapers[page.Scraper]
@@ -85,9 +91,14 @@ func (p *Processor) Download(name, url, downloader string) error {
 	if !ok {
 		return fmt.Errorf("downloader not found: %s", downloader)
 	}
-	log.Printf("download: %s: %s\n", name, url)
-	if err := d.Download(name, url); err != nil {
-		return fmt.Errorf("download: %s", err)
+
+	if p.init {
+		log.Printf("init: %s: %s\n", name, url)
+	} else {
+		log.Printf("download: %s: %s\n", name, url)
+		if err := d.Download(name, url); err != nil {
+			return fmt.Errorf("download: %s", err)
+		}
 	}
 
 	if err := p.DB.Set(name, url, time.Now().String()); err != nil {

@@ -41,27 +41,24 @@ var serverCmd = &cobra.Command{
 		}
 		defer db.Close()
 
-		p := &scraper.Processor{
-			DB: db,
-		}
-
-		initialized, err := db.Initialized()
+		p, err := scraper.New(db)
 		if err != nil {
-			log.Fatalf("failed to check initialized: %s\n", err)
-		}
-		if !initialized {
-			log.Printf("initializing\n")
-			cfg.Initialize = true
+			log.Fatalf("failed to create processor: %s\n", err)
 		}
 
-		// first run
-		p.Process()
+		init, err := cmd.Flags().GetBool("init")
+		if err != nil {
+			log.Fatalf("failed to get init flag: %s\n", err)
+		}
 
-		if cfg.Initialize {
-			log.Printf("initialized\n")
-			if err := db.SetInitialized(); err != nil {
-				log.Fatalf("failed to set initialized: %s\n", err)
-			}
+		if init {
+			p.Initialize()
+		} else {
+			p.Process()
+		}
+
+		if init {
+			log.Printf("intialized")
 		}
 
 		// run cron
@@ -98,5 +95,5 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// serverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	serverCmd.Flags().BoolP("init", "i", false, "initialize database")
 }
