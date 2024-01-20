@@ -1,4 +1,4 @@
-package main
+package database
 
 import (
 	"time"
@@ -10,7 +10,7 @@ type Database struct {
 	client *bbolt.DB
 }
 
-func NewDatabase(path string) (*Database, error) {
+func Open(path string) (*Database, error) {
 	db, err := bbolt.Open(path, 0600, nil)
 	if err != nil {
 		return nil, err

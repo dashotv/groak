@@ -1,4 +1,4 @@
-package myanime
+package scraper
 
 import (
 	"fmt"
@@ -6,19 +6,17 @@ import (
 	"github.com/gocolly/colly"
 )
 
-func New(url string) *MyAnime {
+func NewMyAnime() *MyAnime {
 	return &MyAnime{
-		url: url,
 		col: colly.NewCollector(),
 	}
 }
 
 type MyAnime struct {
-	url string
 	col *colly.Collector
 }
 
-func (m *MyAnime) Read() []string {
+func (m *MyAnime) Read(url string) []string {
 	urls := []string{}
 	m.col.OnHTML("article", func(e *colly.HTMLElement) {
 		urls = append(urls, e.ChildAttr("a", "href"))
@@ -26,6 +24,6 @@ func (m *MyAnime) Read() []string {
 	m.col.OnError(func(r *colly.Response, err error) {
 		fmt.Printf("error: %s\n", err)
 	})
-	m.col.Visit(m.url)
+	m.col.Visit(url)
 	return urls
 }

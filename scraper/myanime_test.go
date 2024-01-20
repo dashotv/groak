@@ -1,4 +1,4 @@
-package myanime
+package scraper
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestGetVideos(t *testing.T) {
-	m := New("https://myanime.live/tag/perfect-world/")
-	urls := m.Read()
+	m := NewMyAnime()
+	urls := m.Read("https://myanime.live/tag/perfect-world/")
 	assert.NotEmpty(t, urls, "expected results")
 }

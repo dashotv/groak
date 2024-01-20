@@ -22,4 +22,4 @@ WORKDIR /root/
 # RUN apk add --no-cache ffmpeg yt-dlp
 COPY --from=builder /go/bin/groak .
 COPY .env.vault .
-CMD ["./groak"]
+CMD ["./groak", "server"]
