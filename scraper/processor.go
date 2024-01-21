@@ -31,6 +31,7 @@ func New(db *database.Database) (*Processor, error) {
 	}
 
 	p := &Processor{
+		DB:          db,
 		Settings:    settings,
 		scrapers:    map[string]Scraper{},
 		downloaders: map[string]Downloader{},
@@ -59,15 +60,18 @@ func (p *Processor) Initialize() error {
 }
 
 func (p *Processor) Process() error {
+	log.Printf("processing...")
 	for _, page := range p.Settings.Pages {
 		m, ok := p.scrapers[page.Scraper]
 		if !ok {
 			return fmt.Errorf("scraper not found: %s", page.Scraper)
 		}
 
-		// log.Printf("processing: %s = %s\n", name, url)
+		log.Printf("processing: %s = %s\n", page.Name, page.URL)
 		for _, v := range m.Read(page.URL) {
-			p.Download(page.Name, v, page.Downloader)
+			if err := p.Download(page.Name, v, page.Downloader); err != nil {
+				log.Printf("error: %s\n", err)
+			}
 		}
 
 		// log.Printf("finished: %s = %s\n", name, url)
@@ -97,6 +101,7 @@ func (p *Processor) Download(name, url, downloader string) error {
 	} else {
 		log.Printf("download: %s: %s\n", name, url)
 		if err := d.Download(name, url); err != nil {
+			_ = p.DB.Set(name, url, err.Error())
 			return fmt.Errorf("download: %s", err)
 		}
 	}

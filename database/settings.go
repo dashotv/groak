@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/samber/lo"
 	"go.etcd.io/bbolt"
 )
 
@@ -20,6 +21,34 @@ type Page struct {
 	Downloader string `json:"downloader"`
 }
 
+func (s *Settings) AddDownloader(name, url string) {
+	if s.Downloaders == nil {
+		s.Downloaders = make(map[string]string)
+	}
+	s.Downloaders[name] = url
+}
+func (s *Settings) AddScraper(name string) {
+	if s.Scrapers == nil {
+		s.Scrapers = make([]string, 0)
+	}
+	if lo.Contains(s.Scrapers, name) {
+		return
+	}
+	s.Scrapers = append(s.Scrapers, name)
+}
+func (s *Settings) AddPage(page *Page) {
+	if s.Pages == nil {
+		s.Pages = make([]*Page, 0)
+	}
+	found := lo.Filter(s.Pages, func(p *Page, i int) bool {
+		return p.Name == page.Name
+	})
+	if len(found) > 0 {
+		return
+	}
+	s.Pages = append(s.Pages, page)
+}
+
 func (d *Database) GetSettings() (*Settings, error) {
 	settings := &Settings{}
 	err := d.client.View(func(tx *bbolt.Tx) error {
@@ -29,7 +58,7 @@ func (d *Database) GetSettings() (*Settings, error) {
 		}
 		value := b.Get([]byte("settings"))
 		if value == nil {
-			return errors.New("settings not found")
+			return nil
 		}
 		return json.Unmarshal(value, settings)
 	})

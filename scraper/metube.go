@@ -18,8 +18,11 @@ func NewMetube(url string) *Metube {
 
 func (m *Metube) Download(name, url string) error {
 	client := resty.New()
+	result := &MetubeResponse{}
 	resp, err := client.R().
 		SetBody(&MetubeDownload{url, false, "best", "any", name}).
+		SetResult(result).
+		ForceContentType("application/json").
 		Post(m.URL)
 	if err != nil {
 		return err
@@ -28,6 +31,11 @@ func (m *Metube) Download(name, url string) error {
 	if !resp.IsSuccess() {
 		return fmt.Errorf("request failed: %d: %s: %s", resp.StatusCode(), resp.Status(), resp.String())
 	}
+
+	if result.Status != "ok" {
+		return fmt.Errorf("request failed: %s", result.Message)
+	}
+
 	return nil
 }
 
@@ -40,5 +48,6 @@ type MetubeDownload struct {
 }
 
 type MetubeResponse struct {
-	Status string `json:"status"`
+	Status  string `json:"status"`
+	Message string `json:"msg"`
 }

@@ -4,10 +4,18 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"log"
 	"os"
 
+	"github.com/caarlos0/env/v10"
 	"github.com/spf13/cobra"
+
+	"github.com/dashotv/groak/database"
 )
+
+var cfg *Config
+var db *database.Database
+var settings *database.Settings
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -29,6 +37,7 @@ func Execute() {
 }
 
 func init() {
+	cobra.OnInitialize(initConfig)
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
@@ -38,4 +47,24 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+// initConfig reads in config file and ENV variables if set.
+func initConfig() {
+	var err error
+	// Parse environment variables into Config struct
+	cfg = &Config{}
+	if err := env.Parse(cfg); err != nil {
+		log.Fatalf("failed to parse config: %s\n", err)
+	}
+	// Open database
+	db, err = database.Open(cfg.Data)
+	if err != nil {
+		log.Fatalf("failed to open db: %s\n", err)
+	}
+	// Get settings
+	settings, err = db.GetSettings()
+	if err != nil {
+		log.Fatalf("failed to get settings: %s\n", err)
+	}
 }
