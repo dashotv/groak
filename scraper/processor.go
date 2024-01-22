@@ -9,11 +9,9 @@ import (
 )
 
 type Processor struct {
-	DB          *database.Database
-	Settings    *database.Settings
-	init        bool
-	scrapers    map[string]Scraper
-	downloaders map[string]Downloader
+	DB       *database.Database
+	Settings *database.Settings
+	init     bool
 }
 
 type Scraper interface {
@@ -31,27 +29,27 @@ func New(db *database.Database) (*Processor, error) {
 	}
 
 	p := &Processor{
-		DB:          db,
-		Settings:    settings,
-		scrapers:    map[string]Scraper{},
-		downloaders: map[string]Downloader{},
-	}
-
-	for name, url := range settings.Downloaders {
-		switch name {
-		case "metube":
-			p.downloaders["metube"] = NewMetube(url)
-		}
-	}
-
-	for _, name := range settings.Scrapers {
-		switch name {
-		case "myanime":
-			p.scrapers["myanime"] = NewMyAnime()
-		}
+		DB:       db,
+		Settings: settings,
 	}
 
 	return p, nil
+}
+
+func NewScraper(name string) Scraper {
+	switch name {
+	case "myanime":
+		return NewMyAnime()
+	}
+	return nil
+}
+
+func NewDownloader(name, url string) Downloader {
+	switch name {
+	case "metube":
+		return NewMetube(url)
+	}
+	return nil
 }
 
 func (p *Processor) Initialize() error {
@@ -62,8 +60,8 @@ func (p *Processor) Initialize() error {
 func (p *Processor) Process() error {
 	log.Printf("processing...")
 	for _, page := range p.Settings.Pages {
-		m, ok := p.scrapers[page.Scraper]
-		if !ok {
+		m := NewScraper(page.Scraper)
+		if m == nil {
 			return fmt.Errorf("scraper not found: %s", page.Scraper)
 		}
 
@@ -91,8 +89,8 @@ func (p *Processor) Download(name, url, downloader string) error {
 		return nil
 	}
 
-	d, ok := p.downloaders[downloader]
-	if !ok {
+	d := NewDownloader(downloader, url)
+	if d == nil {
 		return fmt.Errorf("downloader not found: %s", downloader)
 	}
 
