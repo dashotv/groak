@@ -31,7 +31,7 @@ var serverCmd = &cobra.Command{
 		var stopChan = make(chan os.Signal, 2)
 		signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 
-		p, err := scraper.New(db)
+		p, err := scraper.New(db, settings)
 		if err != nil {
 			log.Fatalf("failed to create processor: %s\n", err)
 		}

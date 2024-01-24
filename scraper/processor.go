@@ -22,12 +22,7 @@ type Downloader interface {
 	Download(name, url string) error
 }
 
-func New(db *database.Database) (*Processor, error) {
-	settings, err := db.GetSettings()
-	if err != nil {
-		return nil, err
-	}
-
+func New(db *database.Database, settings *database.Settings) (*Processor, error) {
 	p := &Processor{
 		DB:       db,
 		Settings: settings,
