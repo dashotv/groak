@@ -58,14 +58,14 @@ func (p *Processor) Initialize() error {
 }
 
 func (p *Processor) Process() error {
-	log.Printf("processing...")
+	log.Printf("processing: %d pages", len(p.Settings.Pages))
 	for _, page := range p.Settings.Pages {
 		m := NewScraper(page.Scraper)
 		if m == nil {
 			return fmt.Errorf("scraper not found: %s", page.Scraper)
 		}
 
-		log.Printf("processing: %s = %s\n", page.Name, page.URL)
+		// log.Printf("processing: %s = %s\n", page.Name, page.URL)
 		for _, v := range m.Read(page.URL) {
 			if err := p.Download(page.Name, v, page.Downloader); err != nil {
 				log.Printf("error: %s\n", err)
@@ -75,6 +75,7 @@ func (p *Processor) Process() error {
 		// log.Printf("finished: %s = %s\n", name, url)
 		<-time.After(5 * time.Second)
 	}
+	log.Printf("processing: complete")
 	return nil
 }
 
@@ -89,17 +90,15 @@ func (p *Processor) Download(name, url, downloader string) error {
 		return nil
 	}
 
-	d := NewDownloader(downloader, url)
+	d := NewDownloader(downloader, p.Settings.Downloaders[downloader])
 	if d == nil {
 		return fmt.Errorf("downloader not found: %s", downloader)
 	}
 
-	if p.init {
-		log.Printf("init: %s: %s\n", name, url)
-	} else {
+	if !p.init {
 		log.Printf("download: %s: %s\n", name, url)
 		if err := d.Download(name, url); err != nil {
-			_ = p.DB.Set(name, url, err.Error())
+			_ = p.DB.Set(name, url, fmt.Sprintf("ERROR:%s", err))
 			return fmt.Errorf("download: %s", err)
 		}
 	}

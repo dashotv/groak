@@ -2,12 +2,13 @@ package scraper
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/go-resty/resty/v2"
 )
 
 type Metube struct {
-	URL string `json:"url"`
+	URL string `json:"url" xml:"url"`
 }
 
 func NewMetube(url string) *Metube {
@@ -25,7 +26,8 @@ func (m *Metube) Download(name, url string) error {
 		ForceContentType("application/json").
 		Post(m.URL)
 	if err != nil {
-		return err
+		log.Printf("DEBUG: resty: %s", resp.String())
+		return fmt.Errorf("resty failed: %w", err)
 	}
 
 	if !resp.IsSuccess() {

@@ -4,17 +4,20 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
 
 	"github.com/dashotv/groak/scraper"
 )
+
+type kv struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
 
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
@@ -33,24 +36,16 @@ var serverCmd = &cobra.Command{
 			log.Fatalf("failed to create processor: %s\n", err)
 		}
 
-		p.Process()
-
-		// run cron
-		if cfg.Schedule == "dev" {
-			return
-		}
-
-		c := cron.New(cron.WithSeconds())
-		fmt.Printf("starting cron: %s\n", cfg.Schedule)
-		c.AddFunc(cfg.Schedule, func() {
+		go func() {
 			p.Process()
-		})
-		c.Start()
+		}()
+
+		Cron(p, cfg)
+		Router(p, db, settings)
 
 		for {
 			select {
 			case <-stopChan:
-				c.Stop()
 				println("stopped")
 				return
 			}

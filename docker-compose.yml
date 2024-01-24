@@ -5,5 +5,7 @@ services:
     working_dir: /app
     command: server
     container_name: groak
+    ports:
+      - "9003:9003"
     volumes:
       - ./:/app

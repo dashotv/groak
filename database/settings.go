@@ -27,6 +27,9 @@ func (s *Settings) AddDownloader(name, url string) {
 	}
 	s.Downloaders[name] = url
 }
+func (s *Settings) RemoveDownloader(name string) {
+	delete(s.Downloaders, name)
+}
 func (s *Settings) AddScraper(name string) {
 	if s.Scrapers == nil {
 		s.Scrapers = make([]string, 0)
@@ -35,6 +38,11 @@ func (s *Settings) AddScraper(name string) {
 		return
 	}
 	s.Scrapers = append(s.Scrapers, name)
+}
+func (s *Settings) RemoveScraper(name string) {
+	s.Scrapers = lo.Filter(s.Scrapers, func(scraper string, i int) bool {
+		return scraper != name
+	})
 }
 func (s *Settings) AddPage(page *Page) {
 	if s.Pages == nil {
@@ -47,6 +55,11 @@ func (s *Settings) AddPage(page *Page) {
 		return
 	}
 	s.Pages = append(s.Pages, page)
+}
+func (s *Settings) RemovePage(name string) {
+	s.Pages = lo.Filter(s.Pages, func(p *Page, i int) bool {
+		return p.Name != name && p.Name != ""
+	})
 }
 
 func (d *Database) GetSettings() (*Settings, error) {

@@ -18,63 +18,81 @@ var listCmd = &cobra.Command{
 	Args:  cobra.RangeArgs(0, 1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if all, err := cmd.Flags().GetBool("all"); err == nil && all {
-			eachBucket(func(bucket string) {
+			err := eachBucket(func(bucket string) error {
 				log.Printf("-  %s", bucket)
-				eachItem(bucket, func(key string) {
+				err := eachItem(bucket, func(key string) error {
 					val, err := db.Get(bucket, key)
 					if err != nil {
-						log.Printf("   -  %s failed to get value: %s", key, err)
-						return
+						return fmt.Errorf("%s failed to get value: %s", key, err)
 					}
 					log.Printf("   -  %s %s", key, val)
+					return nil
 				})
+				if err != nil {
+					log.Fatalf("error: %s\n", err)
+				}
+				return nil
 			})
+			if err != nil {
+				log.Fatalf("error: %s\n", err)
+			}
 			return
 		}
 
 		if len(args) == 0 {
-			eachBucket(func(bucket string) {
+			_ = eachBucket(func(bucket string) error {
 				log.Printf("-  %s", bucket)
+				return nil
 			})
 		}
 
 		bucket := args[0]
-		eachItem(bucket, func(key string) {
+		err := eachItem(bucket, func(key string) error {
 			val, err := db.Get(bucket, key)
 			if err != nil {
-				log.Printf("   -  %s failed to get value: %s", key, err)
-				return
+				return fmt.Errorf("%s failed to get value: %s", key, err)
 			}
 			log.Printf("   -  %s %s", key, val)
+			return nil
 		})
+		if err != nil {
+			log.Fatalf("error: %s\n", err)
+		}
 	},
 }
 
-func eachBucket(fn func(string)) {
+func eachBucket(fn func(string) error) error {
 	buckets, err := db.ListBuckets()
 	if err != nil {
-		fmt.Printf("failed to list buckets: %s\n", err)
-		return
+		return fmt.Errorf("failed to list buckets: %s\n", err)
 	}
 
 	for _, bucket := range buckets {
 		if bucket == "groak" {
 			continue
 		}
-		fn(bucket)
+		err := fn(bucket)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func eachItem(bucket string, fn func(string)) {
+func eachItem(bucket string, fn func(string) error) error {
 	keys, err := db.List(bucket)
 	if err != nil {
-		fmt.Printf("failed to list keys: %s\n", err)
-		return
+		return fmt.Errorf("failed to list keys: %s\n", err)
 	}
 
 	for _, key := range keys {
-		fn(key)
+		err := fn(key)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func init() {
