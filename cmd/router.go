@@ -130,6 +130,10 @@ func Router(p *scraper.Processor, db *database.Database, settings *database.Sett
 				return echo.NewHTTPError(http.StatusInternalServerError, err)
 			}
 
+			if err := p.ProcessSingle(n.Name); err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, err)
+			}
+
 			return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 		})
 		e.DELETE("/pages/:name", func(c echo.Context) error {

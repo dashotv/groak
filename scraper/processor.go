@@ -57,25 +57,47 @@ func (p *Processor) Initialize() error {
 	return p.Process()
 }
 
+func (p *Processor) ProcessSingle(name string) error {
+	log.Printf("processing: %s", name)
+	for _, page := range p.Settings.Pages {
+		if page.Name != name {
+			continue
+		}
+
+		err := p.processPage(page)
+		if err != nil {
+			log.Printf("error: %s\n", err)
+		}
+	}
+	log.Printf("processing: complete")
+	return nil
+}
+
 func (p *Processor) Process() error {
 	log.Printf("processing: %d pages", len(p.Settings.Pages))
 	for _, page := range p.Settings.Pages {
-		m := NewScraper(page.Scraper)
-		if m == nil {
-			return fmt.Errorf("scraper not found: %s", page.Scraper)
+		if err := p.processPage(page); err != nil {
+			log.Printf("error: %s\n", err)
 		}
-
-		// log.Printf("processing: %s = %s\n", page.Name, page.URL)
-		for _, v := range m.Read(page.URL) {
-			if err := p.Download(page.Name, v, page.Downloader); err != nil {
-				log.Printf("error: %s\n", err)
-			}
-		}
-
 		// log.Printf("finished: %s = %s\n", name, url)
 		<-time.After(5 * time.Second)
 	}
 	log.Printf("processing: complete")
+	return nil
+}
+
+func (p *Processor) processPage(page *database.Page) error {
+	m := NewScraper(page.Scraper)
+	if m == nil {
+		return fmt.Errorf("scraper not found: %s", page.Scraper)
+	}
+
+	// log.Printf("processing: %s = %s\n", page.Name, page.URL)
+	for _, v := range m.Read(page.URL) {
+		if err := p.Download(page.Name, v, page.Downloader); err != nil {
+			log.Printf("error: %s\n", err)
+		}
+	}
 	return nil
 }
 
